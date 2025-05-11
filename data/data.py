@@ -12,7 +12,8 @@ import os
 # print(flow_maximum_speed)
 
 csv_file = "./ScatsDataOctober2006.csv"
-new_csv_file = "./train.csv"
+new_csv_file = "./non_aggregated.csv"
+train_csv_file = "./train.csv"
 
 df = pd.read_csv(csv_file)
 
@@ -36,7 +37,6 @@ for index, row in df.iterrows():
             'CD_MELWAY': row['CD_MELWAY'],
             'NB_LATITUDE': row['NB_LATITUDE'],
             'NB_LONGITUDE': row['NB_LONGITUDE'],
-            # Assuming 'Date' is a string. If it's a datetime object, you might need to format it first.
             'datetime': str(row['Date']) + f" {hour}:00",
             'Flow (Veh/hr)': hour_flow_total
         }
@@ -46,7 +46,20 @@ for index, row in df.iterrows():
 
 new_df = pd.DataFrame(new_rows_list)
 
-print(df.head())
-print(new_df.tail())
+# print(df.head())
+# print(new_df.tail())
 
+# This contains some additional information needed for edge generation
 new_df.to_csv(new_csv_file, index = False)
+
+train_csv_df = (
+    new_df
+    .groupby(['SCATS Number', 'datetime'])
+    .agg({
+        'Flow (Veh/hr)': 'sum',
+    })
+    .reset_index()
+)
+
+# This contains only the required information for training
+train_csv_df.to_csv(train_csv_file, index = False)
