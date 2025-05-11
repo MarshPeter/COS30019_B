@@ -49,4 +49,4 @@ new_df = pd.DataFrame(new_rows_list)
 print(df.head())
 print(new_df.tail())
 
-new_df.to_csv(new_csv_file)
+new_df.to_csv(new_csv_file, index = False)
