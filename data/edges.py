@@ -7,6 +7,7 @@ from geopy.distance import geodesic
 non_aggregated_csv = "./non_aggregated.csv"
 from_csv = "./locations.csv"
 to_csv = "./edges.csv"
+nodes_csv = "./nodes.csv"
 
 def calculate_centroid(points):
     if not points:
@@ -143,6 +144,7 @@ for _, row in non_aggregated_csv_df.iterrows():
 centroids = filter_scats_into_centroids(scat_location_values)
 print(centroids)
 
+# Information about the distance between all edges
 df_edges['distance (km)'] = df_edges.apply(
     lambda row: geodesic(
         (centroids[row['SCATS_A']][1], centroids[row['SCATS_A']][0]),
@@ -150,6 +152,19 @@ df_edges['distance (km)'] = df_edges.apply(
     ).km,
     axis=1
 )
+
+# Information about the approximate location of all nodes
+node_data = []
+for scat_number, coords in centroids.items():
+    node_data.append({
+        "SCAT Number": scat_number,
+        "LONGITUDE": coords[0],
+        "LATITUDE": coords[1]
+    })
+
+node_df = pd.DataFrame(node_data)
+
+node_df.to_csv(nodes_csv, index=False)
 
 # write it out
 df_edges.to_csv("intersection_edges.csv", index=False)
