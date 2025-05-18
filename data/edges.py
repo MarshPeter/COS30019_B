@@ -112,7 +112,6 @@ df_edges = df_edges.rename(
     }
 )
 
-
 non_aggregated_csv_df = pd.read_csv(non_aggregated_csv)
 
 already_encountered_scat_locations = list()
