@@ -2,15 +2,6 @@ import pandas as pd
 import numpy as np
 import os
 
-# speed_limit = 60
-# coef_a = -1.4648375
-# coef_b = 93.75
-# coefficients = [coef_a, coef_b, 0]
-# roots = np.roots(coefficients)
-# flow_maximum_speed = (roots[0] + roots[1]) / 2
-# print(roots)
-# print(flow_maximum_speed)
-
 csv_file = "./ScatsDataOctober2006.csv"
 new_csv_file = "./non_aggregated.csv"
 train_csv_file = "./train.csv"
