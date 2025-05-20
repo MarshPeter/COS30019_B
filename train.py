@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from models.sRNN import get_sRNN
 from LSTMModel import build_lstm_model
+from models.GRU import get_GRU
 from sklearn.preprocessing import MinMaxScaler
 
 def process_data(lags):
@@ -47,8 +48,8 @@ def main():
     X_train, Y_train, _ = process_data(lag)
 
     X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-    m = build_lstm_model([12, 64, 64, 1])
-    train_model(m, X_train, Y_train, "LSTM", config)
+    m = get_GRU([12, 64, 64, 1])
+    train_model(m, X_train, Y_train, "GRU", config)
 
 if __name__ == "__main__":
     main()
