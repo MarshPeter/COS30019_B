@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 import warnings
 
 from algorithms.Graph import Graph
-from algorithms.UniformCost import UniformCost
+from algorithms.bfs import BFS
 
 # Suppress potential warnings from scikit-learn
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -80,7 +80,7 @@ def create_graph(predicted_flows, nodes_file, intersections_file):
     return graph
 
 def main():
-    model_file = 'models/sRNN.h5'  
+    model_file = 'models/GRU.h5'  
     train_data_file = './data/train.csv'
     intersections_file  = './data/intersection_edges.csv'
     nodes_file = "./data/nodes.csv"
@@ -94,9 +94,9 @@ def main():
     graph.set_origin(origin)
     graph.set_goals([destination]) # legacy requirement to have goals be in lists
 
-    solution = UniformCost(graph)
+    solution = BFS(graph)
 
-    print(solution.uniform_cost_search())
+    print(solution.breadth_first_search())
 
 if __name__ == "__main__":
     main()
