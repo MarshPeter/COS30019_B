@@ -2,8 +2,9 @@ from Graph import Graph
 from Time import calculate_time
 
 class DepthFirst:
-    def __init__(self, graph: Graph):
+    def __init__(self, graph: Graph, flow: dict):
         self.graph = graph
+        self.flow = flow
 
     def dfs(self):
         stack = [(self.graph.origin, [self.graph.origin], 0)]
@@ -27,7 +28,7 @@ class DepthFirst:
                 if neighbor not in visited:
                     pos_a = self.graph.get_position(node)
                     pos_b = self.graph.get_position(neighbor)
-                    cost = calculate_time(pos_a, pos_b, 500)  # DFS doesn't use LSTM flow
+                    cost = calculate_time(pos_a, pos_b, self.flow.get(neighbor, 500))
                     stack.append((neighbor, path + [neighbor], cost_so_far + cost))
 
         return None, float('inf')

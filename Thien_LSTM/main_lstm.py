@@ -34,7 +34,6 @@ def predict_flow_per_scats(model_path, data_path, lags, hour):
         scaled_pred = model.predict(input_seq, verbose=0)[0][0]
         predicted_flow = scaler.inverse_transform([[scaled_pred]])[0][0]
 
-        # ✅ Verbose output like your friend's version
         print(f"\nProcessing SCATS Number: {scats_number}")
         print(f"Average {hour}:00 flow for SCATS {scats_number}: {avg_flow:.2f}")
         print(f"Predicted flow for SCATS {scats_number} at {hour}:00: {predicted_flow:.2f}")
@@ -42,6 +41,30 @@ def predict_flow_per_scats(model_path, data_path, lags, hour):
         predicted_flows[scats_number] = predicted_flow
 
     return predicted_flows
+
+def backfill_missing_flows(predicted_flows, edges):
+    completed_flows = predicted_flows.copy()
+    all_nodes = set(edges['SCATS_A']) | set(edges['SCATS_B'])
+
+    avg_flow = sum(predicted_flows.values()) / len(predicted_flows)
+
+    for node in all_nodes:
+        if node not in completed_flows:
+            neighbors = edges[
+                (edges['SCATS_A'] == node) | (edges['SCATS_B'] == node)
+            ]
+            neighbor_flows = []
+            for _, row in neighbors.iterrows():
+                neighbor = row['SCATS_B'] if row['SCATS_A'] == node else row['SCATS_A']
+                if neighbor in predicted_flows:
+                    neighbor_flows.append(predicted_flows[neighbor])
+
+            if neighbor_flows:
+                completed_flows[node] = sum(neighbor_flows) / len(neighbor_flows)
+            else:
+                completed_flows[node] = avg_flow
+
+    return completed_flows
 
 def create_graph(predicted_flows, nodes_file, edges_file):
     nodes = pd.read_csv(nodes_file)
@@ -52,7 +75,7 @@ def create_graph(predicted_flows, nodes_file, edges_file):
         graph.add_node(row['SCAT Number'], row['LATITUDE'], row['LONGITUDE'])
 
     for _, row in edges.iterrows():
-        flow = predicted_flows.get(row['SCATS_B'], 500)
+        flow = predicted_flows[row['SCATS_B']]  # ✅ Không dùng .get() hay 500
         graph.add_neighbor(row['SCATS_A'], row['SCATS_B'], flow)
         graph.add_neighbor(row['SCATS_B'], row['SCATS_A'], flow)
 
@@ -69,23 +92,27 @@ def main():
     origin = 970
     destination = 4057
 
+    # Predict flow values
     predicted_flows = predict_flow_per_scats(model_file, train_data, lag, hour)
+    edges = pd.read_csv(edges_file)
+    clean_flows = backfill_missing_flows(predicted_flows, edges)
 
-    # ✅ Print clean final flow dictionary
-    clean_flows = {k: float(v) for k, v in predicted_flows.items()}
     print("\nPredicted Flows (LSTM Output):")
     print(clean_flows)
 
-    graph = create_graph(predicted_flows, nodes_file, edges_file)
+    # Create graph
+    graph = create_graph(clean_flows, nodes_file, edges_file)
     graph.set_origin(origin)
     graph.set_goals([destination])
 
+    # Run A*
     print("\n=== A* Search ===")
-    astar_solver = AStar(graph, predicted_flows)
+    astar_solver = AStar(graph, clean_flows)
     print(astar_solver.astar())
 
+    # Run DFS
     print("\n=== DFS Search ===")
-    dfs_solver = DepthFirst(graph)
+    dfs_solver = DepthFirst(graph, clean_flows)
     print(dfs_solver.dfs())
 
 if __name__ == "__main__":

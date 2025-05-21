@@ -1,5 +1,5 @@
 import heapq
-import math
+from geopy.distance import geodesic
 from Graph import Graph
 from Time import calculate_time  
 
@@ -9,9 +9,9 @@ class AStar:
         self.flow = flow
 
     def heuristic(self, node, goal):
-        x1, y1 = self.graph.node_positions[node]
-        x2, y2 = self.graph.node_positions[goal]
-        return math.hypot(x2 - x1, y2 - y1)
+        coord1 = self.graph.get_position(node)
+        coord2 = self.graph.get_position(goal)
+        return geodesic(coord1, coord2).kilometers
 
     def astar(self):
         frontier = []
