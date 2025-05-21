@@ -27,10 +27,15 @@ class Greedy:
                 for i in range(len(result) - 1):
                     current = result[i]
                     next = result[i + 1]
+
+                    pos_current = self.graph.get_position(current)
+                    pos_next = self.graph.get_position(next)
+                    
                     # Look up time from graph
                     for neighbor, weight in self.graph.get_edges(current):
                         if neighbor == next:
-                            total_time += weight
+                            time = calculate_time(pos_current, pos_next, weight)
+                            total_time += time
                             break
                 results.append((goal, result, total_time))
 
