@@ -1,5 +1,6 @@
 from .Graph import Graph
 from collections import deque
+from .Time import calculate_time
 
 class BFS:
     """
@@ -27,7 +28,22 @@ class BFS:
             if self.graph.is_goal(node):
                 # add it to found_destinations
                 if node not in found_destinations:
-                    found_destinations[node] = path
+                    total_time = 0
+                    for i in range(len(path) - 1):
+                        current = path[i]
+                        next = path[i + 1]
+                        pos_current = self.graph.get_position(current)
+                        pos_next = self.graph.get_position(next)
+                    
+                    # Look up time from graph
+                    for neighbor, weight in self.graph.get_edges(current):
+                        if neighbor == next:
+                            time = calculate_time(pos_current, pos_next, weight)
+                            total_time += time
+                            break
+                        
+                    found_destinations[node] = (path, total_time)
+
                 # if we have all destinations end the algorithm early
                 if len(found_destinations) == len(self.graph.goals):
                     break # found all destinations
