@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 import warnings
 
 from algorithms.Graph import Graph
-from algorithms.greedy import Greedy
+from algorithms.bfs import BFS
 
 # Suppress potential warnings from scikit-learn
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -94,9 +94,9 @@ def main():
     graph.set_origin(origin)
     graph.set_goals([destination]) # legacy requirement to have goals be in lists
 
-    solution = Greedy(graph)
+    solution = BFS(graph)
 
-    print(solution.gbfs())
+    print(solution.breadth_first_search())
 
 if __name__ == "__main__":
     main()
