@@ -22,7 +22,18 @@ class Greedy:
         for goal in self.graph.goals:
             result = self.__gbfs([self.graph.origin], goal)
             if result is not None:
-                results.append(result) # Initialise path list with origin node
+                # Calculate total cost (time) along path
+                total_time = 0
+                for i in range(len(result) - 1):
+                    current = result[i]
+                    next = result[i + 1]
+                    # Look up time from graph
+                    for neighbor, weight in self.graph.get_edges(current):
+                        if neighbor == next:
+                            total_time += weight
+                            break
+                results.append((goal, result, total_time))
+
         return results
     
     def __gbfs(self, path, goal):
