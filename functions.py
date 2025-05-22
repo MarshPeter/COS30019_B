@@ -9,58 +9,80 @@ from algorithms.Graph import Graph
 # Suppress potential warnings from scikit-learn
 warnings.filterwarnings("ignore", category=UserWarning)
 
-def predict_flow_per_scats(model_path, data_path, lags, hour):
+def predict_flow_per_scats_sequential(model_path, data_path, lags, hour):
     model = load_model(
         model_path,
         custom_objects={
-            # These are to prevent errors
             'mse': tf.keras.losses.MeanSquaredError(),
             'mape': tf.keras.metrics.MeanAbsolutePercentageError()
         }
     )
 
-    # Process training data
+    # Process data
     df = pd.read_csv(data_path)
     df['datetime'] = pd.to_datetime(df['datetime'], dayfirst=True)
     df['hour'] = df['datetime'].dt.hour
 
-    # Filter for all entries of the specified hour
-    hour_df = df[df['hour'] == hour].copy() 
+    # Sort data by SCATS Number and datetime to ensure correct sequencing
+    df = df.sort_values(by=['SCATS Number', 'datetime'])
 
-    if hour_df.empty:
-        print(f"No data found for ${hour}:00 in the training file.")
-        return {}
-
-    # Calculate the average hour flow for each SCATS number
-    average_eleven_am_per_scats = hour_df.groupby('SCATS Number')['Flow (Veh/hr)'].mean()
-
-    # Prepare the scaler so that we can actually use it as test data
+    # Prepare the scaler
     # Fit the scaler on the entire 'Flow (Veh/hr)' column from the training data
     scaler = MinMaxScaler(feature_range=(0, 1)).fit(df['Flow (Veh/hr)'].values.reshape(-1, 1))
 
     predicted_flows = {}
-    # Iterate through each SCATS number and make predictions
-    for scats_number, avg_flow in average_eleven_am_per_scats.items():
-        print(f"\nProcessing SCATS Number: {scats_number}")
-        print(f"Average 11:00 AM flow for SCATS {scats_number}: {avg_flow:.2f}")
+    # Group by SCATS number to process each one individually
+    grouped_scats = df.groupby('SCATS Number')
 
-        # Scale the average hour flow for the current SCATS number
-        scaled_average_flow = scaler.transform([[avg_flow]])[0][0]
+    for scats_number, scats_data in grouped_scats:
+        # For debugging
+        # print(f"\nProcessing SCATS Number: {scats_number}")
 
-        # Create the model input
-        model_input = np.array([scaled_average_flow] * lags).reshape(1, lags, 1)
-        # print(f"Model input shape for SCATS {scats_number}: {model_input.shape}") # Optional: uncomment for debugging
+        # Filter data for the target hour. We need the target hour and 'lags' previous hours.
+        # We'll need to iterate through the data to find sequences ending at the target hour.
+
+        # We need to create sequences of 'lags' length for each instance of the target 'hour'.
+        # For prediction, we'll use the *latest* available sequence ending at the target hour
+        # for each SCATS number.
+
+        scats_data_values = scats_data['Flow (Veh/hr)'].values.reshape(-1, 1)
+        scaled_scats_data = scaler.transform(scats_data_values)
+
+        # Find the sequence ending at the *latest* instance of the target hour
+        latest_sequence = None
+        latest_datetime = None
+
+        # Iterate through the data points for the current SCATS number
+        for i in range(len(scats_data) - lags + 1):
+            current_sequence = scaled_scats_data[i : i + lags]
+            current_datetime = scats_data.iloc[i + lags - 1]['datetime'] # Datetime of the last element in the sequence
+
+            if current_datetime.hour == hour:
+                latest_sequence = current_sequence
+                latest_datetime = current_datetime
+
+        if latest_sequence is None:
+            print(f"Could not find a complete sequence of length {lags} ending at hour {hour} for SCATS {scats_number}.")
+            predicted_flows[scats_number] = np.nan # Or some other indicator of no prediction
+            continue
+
+        # print(f"Using latest sequence ending at {latest_datetime} for prediction.")
+
+        # Prepare the model input: reshape to (1, lags, 1)
+        model_input = latest_sequence.reshape(1, lags, 1)
 
         # Make prediction
-        scaled_prediction = model.predict(model_input, verbose=0)[0][0] # verbose=0 to reduce output
+        scaled_prediction = model.predict(model_input, verbose=0)[0][0]
 
         # Inverse transform the prediction
         predicted_flow = scaler.inverse_transform([[scaled_prediction]])[0][0]
 
-        predicted_flows[scats_number] = float(predicted_flow)
-        print(f"Predicted flow for SCATS {scats_number} at 11:00 AM: {predicted_flow:.2f}")
+        predicted_flows[scats_number] = predicted_flow
+    # Uncomment the following for debugging purposes
+    #     print(f"Predicted flow for SCATS {scats_number} at {hour}:00: {predicted_flow:.2f}")
 
-    print(predicted_flows)
+    # print("\nFinal Predictions:")
+    # print(predicted_flows)
     return predicted_flows
 
 def create_graph(predicted_flows, nodes_file, edges_file):
@@ -72,7 +94,6 @@ def create_graph(predicted_flows, nodes_file, edges_file):
         graph.add_node(row['SCAT Number'], row['LATITUDE'], row['LONGITUDE'])
 
     for _, row in edges.iterrows():
-        print(row)
         graph.add_neighbor(int(row['SCATS_A']), int(row['SCATS_B']), float(predicted_flows[row['SCATS_B']]))
         graph.add_neighbor(int(row['SCATS_B']), int(row['SCATS_A']), float(predicted_flows[row['SCATS_A']]))
 

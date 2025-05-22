@@ -2,8 +2,12 @@ import streamlit as st
 import networkx as nx
 import matplotlib.pyplot as plt
 import pandas as pd
-from functions import predict_flow_per_scats, create_graph
+from functions import predict_flow_per_scats_sequential, create_graph
 from algorithms.UniformCost import UniformCost
+from algorithms.bfs import BFS
+from algorithms.greedy import Greedy
+from algorithms.DFS import DepthFirst
+from algorithms.AStar import AStar
 
 # --- 1. Create the Graph with Longitude and Latitude ---
 def create_sample_graph_geo(node_data, edges_data, flows_data):
@@ -79,7 +83,7 @@ def main(nodes_csv, edges_csv, flows_csv):
 
     start_location = st.text_input("Select Start Location:")
     end_location = st.text_input("Select End Location:")
-    model_choice = st.selectbox("Select desired ML model: ", ['SRNN', 'LSTM', 'GRU'])
+    model_choice = st.selectbox("Select desired ML model: ", ['sRNN', 'LSTM', 'GRU'])
     algorithm_choice = st.selectbox("Select desired graphing algorithm: ", ['BFS', 'DFS', 'Uniform Cost', 'Greedy', 'AStar'])
     hour = st.text_input("Select hour 0-23 (representing 24 hour time)")
 
@@ -93,9 +97,17 @@ def main(nodes_csv, edges_csv, flows_csv):
             result = get_path(model_choice, algorithm_choice, int(hour), int(start_location), int(end_location))
 
             if algorithm_choice == "BFS":
-                pass
+                print(result)
+                path = result[0][1][0]
+                time = result[0][1][1]
+                st.write(f"path: {path}")
+                st.write(f"Time: {time} minutes")
             elif algorithm_choice == "DFS":
-                pass
+                print(result)
+                path = result[0][1][0]
+                time = result[0][1][1]
+                st.write(f"path: {path}")
+                st.write(f"Time: {time} minutes")
             elif algorithm_choice == "Uniform Cost":
                 print(result)
                 path = result[0][1][0]
@@ -103,9 +115,17 @@ def main(nodes_csv, edges_csv, flows_csv):
                 st.write(f"path: {path}")
                 st.write(f"Time: {time} minutes")
             elif algorithm_choice == "Greedy":
-                pass
+                print(result)
+                path = result[0][1]
+                time = result[0][2]
+                st.write(f"path: {path}")
+                st.write(f"Time: {time} minutes")
             elif algorithm_choice == "AStar":
-                pass
+                print(result)
+                path = result[0][1][0]
+                time = result[0][1][1]
+                st.write(f"path: {path}")
+                st.write(f"Time: {time} minutes")
 
 def get_path(model, algorithm, hour, origin, destination):
     model_file = f'./models/{model}.h5'  
@@ -114,22 +134,26 @@ def get_path(model, algorithm, hour, origin, destination):
     nodes_file = "./data/nodes.csv"
     lag_value = 12  # Matches training lag
 
-    predicted_flows = predict_flow_per_scats(model_file, train_data_file, lag_value, hour)
+    predicted_flows = predict_flow_per_scats_sequential(model_file, train_data_file, lag_value, hour)
     graph = create_graph(predicted_flows, nodes_file, edges_file)
     graph.set_origin(origin)
     graph.set_goals([destination]) # legacy requirement to have goals be in lists    
 
     if algorithm == "BFS":
-        pass
+        solution = BFS(graph)
+        return solution.breadth_first_search()
     elif algorithm == "DFS":
-        pass
+        solution = DepthFirst(graph)
+        return solution.dfs()
     elif algorithm == "Uniform Cost":
         solution = UniformCost(graph)
         return solution.uniform_cost_search()
     elif algorithm == "Greedy":
-        pass
+        solution = Greedy(graph)
+        return solution.gbfs()
     elif algorithm == "AStar":
-        pass
+        solution = AStar(graph)
+        return solution.astar()
 
 if __name__ == "__main__":
     nodes_file = "./data/nodes.csv"

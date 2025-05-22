@@ -35,12 +35,12 @@ class BFS:
                         pos_current = self.graph.get_position(current)
                         pos_next = self.graph.get_position(next)
                     
-                    # Look up time from graph
-                    for neighbor, weight in self.graph.get_edges(current):
-                        if neighbor == next:
-                            time = calculate_time(pos_current, pos_next, weight)
-                            total_time += time
-                            break
+                        # Look up time from graph
+                        for neighbor, weight in self.graph.get_edges(current):
+                            if neighbor == next:
+                                time = calculate_time(pos_current, pos_next, weight)
+                                total_time += time
+                                break
                         
                     found_destinations[node] = (path, total_time)
 

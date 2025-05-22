@@ -1,4 +1,11 @@
-SCAT Number,LONGITUDE,LATITUDE
+import random
+import io
+import pandas as pd
+
+data_set1 = ['LSTM', 'sRRN', 'GRU']
+data_set2 = ['BFS', 'DFS', 'Uniform Cost', 'Greedy', 'AStart']
+
+data_set3_string = """SCAT Number,LONGITUDE,LATITUDE
 970,145.09150749999998,-37.8673025
 2000,145.094323925,-37.851923175
 2200,145.0980472,-37.816539975
@@ -39,3 +46,25 @@ SCAT Number,LONGITUDE,LATITUDE
 4335,145.03518,-37.80624
 4812,145.01558666666665,-37.82891333333334
 4821,145.00847,-37.812965
+"""
+
+# Read data set 3 into a pandas DataFrame
+data_set3_df = pd.read_csv(io.StringIO(data_set3_string))
+data_set3_scat = data_set3_df['SCAT Number'].tolist()
+
+data_set4 = list(range(24)) # 0-23
+
+random_combinations = []
+
+for _ in range(20):
+    combo1 = random.choice(data_set1)
+    combo2 = random.choice(data_set2)
+    combo3_scat1 = random.choice(data_set3_scat)
+    combo3_scat2 = random.choice(data_set3_scat)
+    combo4 = random.choice(data_set4)
+
+    random_combinations.append((combo1, combo2, combo3_scat1, combo3_scat2, combo4))
+
+# Print the generated combinations
+for combo in random_combinations:
+    print(combo)

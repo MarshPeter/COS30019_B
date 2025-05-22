@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the CSV file
-loss_data = pd.read_csv('sRNN loss.csv') # Replace 'your_loss_file.csv' with your filename
+loss_data = pd.read_csv('sRNN loss.csv') # Replace 
 
 # Assuming each row is an epoch, we can add an epoch column
 loss_data['Epoch'] = range(1, len(loss_data) + 1)
