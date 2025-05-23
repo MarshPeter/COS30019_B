@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import os
 
 csv_file = "./ScatsDataOctober2006.csv"
 new_csv_file = "./non_aggregated.csv"
@@ -12,8 +11,7 @@ new_rows_list = []
 # new_df = pd.DataFrame(columns=['SCATS Number', 'Location', 'CD_MELWAY', 'NB_LATITUDE', 'NB_LONGITUDE', 'datetime', 'Flow (Veh/hr)'])
 
 for index, row in df.iterrows():
-    # print(row)
-    # Disgusting for loop because I'm a brainlet
+    # Combines the separate time columns into a single column where the additional hour information is now apart of a datetime column
     hour = 0
     for i in range(0, 96, 4):
         timestamp1 = int(row[f'V0{i}'] if i < 10 else row[f'V{i}'])
@@ -43,6 +41,7 @@ new_df = pd.DataFrame(new_rows_list)
 # This contains some additional information needed for edge generation
 new_df.to_csv(new_csv_file, index = False)
 
+# This aggregates all directions connected to a shared SCAT point and gives a single result for each SCAT point per hour
 train_csv_df = (
     new_df
     .groupby(['SCATS Number', 'datetime'])

@@ -1,7 +1,7 @@
 import numpy as np
 from geopy.distance import geodesic
-
 from math import sqrt
+
 
 # exact is at 1500.0064000273069, but this is good enough
 turning_point_flow = 1500

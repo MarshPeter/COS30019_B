@@ -3,8 +3,9 @@ import pandas as pd
 import networkx as nx
 from geopy.distance import geodesic
 
-# We use this one to figure out the longitudes of each SCAT Point
+# We use this file to estimate the longitudes of each SCAT Point
 
+# calculate the centroid of all points
 def calculate_centroid(points):
     if not points:
         return None
@@ -21,6 +22,7 @@ def calculate_centroid(points):
 
     return (cent_lon, cent_lat)
 
+# filters out any extreme outliers, then creates a filtered_scats dictionary that should contain all the necessary node information
 def filter_scats_into_centroids(loc_data, center_lon = 145.0, lon_tolerance = 2, center_lat = -37, lat_tolerance = 2):
     filtered_scats = {}
     min_lon = center_lon - lon_tolerance
@@ -38,6 +40,7 @@ def filter_scats_into_centroids(loc_data, center_lon = 145.0, lon_tolerance = 2,
             lon = longitudes[i]
             lat = latitudes[i]
 
+            # Only accept points that are roughly expected
             if min_lon < lon <= max_lon and min_lat <= lat <= max_lat:
                 valid_points.append((lon, lat))
 
@@ -73,21 +76,9 @@ def create_estimated_locations(data_file, save_file):
             scat_location_values[row["SCATS Number"]]["latitudes"].append(row["NB_LATITUDE"])
             scat_location_values[row["SCATS Number"]]["count"] = scat_location_values[row["SCATS Number"]]["count"] + 1
 
-    # print(already_encountered_scat_locations)
-    # print(scat_location_values)
-
     # Dictionary is in scat_number: (long, lat)
     centroids = filter_scats_into_centroids(scat_location_values)
     print(centroids)
-
-    # Information about the distance between all edges
-    # df_edges['distance (km)'] = df_edges.apply(
-    #     lambda row: geodesic(
-    #         (centroids[row['SCATS_A']][1], centroids[row['SCATS_A']][0]),
-    #         (centroids[row['SCATS_B']][1], centroids[row['SCATS_B']][0]),
-    #     ).km,
-    #     axis=1
-    # )
 
     # Information about the approximate location of all nodes
     node_data = []
@@ -99,7 +90,6 @@ def create_estimated_locations(data_file, save_file):
         })
 
     node_df = pd.DataFrame(node_data)
-
     node_df.to_csv(save_file, index=False)
 
 def main():

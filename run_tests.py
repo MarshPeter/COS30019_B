@@ -1,10 +1,3 @@
-import pandas as pd
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from sklearn.preprocessing import MinMaxScaler
-import warnings
-
 from algorithms.AStar import AStar
 from algorithms.DFS import DepthFirst
 from algorithms.UniformCost import UniformCost
@@ -12,6 +5,7 @@ from algorithms.bfs import BFS
 from algorithms.greedy import Greedy
 from functions import predict_flow_per_scats_sequential, create_graph
 
+# This file just runs all tests
 tests = [
     ('sRRN', 'BFS', 4263, 3685, 16),
     ('LSTM', 'BFS', 4057, 4063, 21),

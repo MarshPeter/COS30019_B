@@ -1,5 +1,8 @@
+import os
+
 import pandas as pd
 import numpy as np
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Suppress all messages except errors, needs to be before tensorflow import
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
@@ -8,14 +11,17 @@ from algorithms.Graph import Graph
 
 # Suppress potential warnings from scikit-learn
 warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*Compiled the loaded model, but the compiled metrics have yet to be built.*", category=UserWarning)
 
+# Will return a data set of all values that occur during the hour. This is intended to be the input for used models
 def predict_flow_per_scats_sequential(model_path, data_path, lags, hour):
     model = load_model(
         model_path,
         custom_objects={
             'mse': tf.keras.losses.MeanSquaredError(),
             'mape': tf.keras.metrics.MeanAbsolutePercentageError()
-        }
+        },
+        compile=False
     )
 
     # Process data
@@ -27,7 +33,6 @@ def predict_flow_per_scats_sequential(model_path, data_path, lags, hour):
     df = df.sort_values(by=['SCATS Number', 'datetime'])
 
     # Prepare the scaler
-    # Fit the scaler on the entire 'Flow (Veh/hr)' column from the training data
     scaler = MinMaxScaler(feature_range=(0, 1)).fit(df['Flow (Veh/hr)'].values.reshape(-1, 1))
 
     predicted_flows = {}
@@ -38,19 +43,11 @@ def predict_flow_per_scats_sequential(model_path, data_path, lags, hour):
         # For debugging
         # print(f"\nProcessing SCATS Number: {scats_number}")
 
-        # Filter data for the target hour. We need the target hour and 'lags' previous hours.
-        # We'll need to iterate through the data to find sequences ending at the target hour.
-
-        # We need to create sequences of 'lags' length for each instance of the target 'hour'.
-        # For prediction, we'll use the *latest* available sequence ending at the target hour
-        # for each SCATS number.
-
         scats_data_values = scats_data['Flow (Veh/hr)'].values.reshape(-1, 1)
         scaled_scats_data = scaler.transform(scats_data_values)
 
         # Find the sequence ending at the *latest* instance of the target hour
         latest_sequence = None
-        latest_datetime = None
 
         # Iterate through the data points for the current SCATS number
         for i in range(len(scats_data) - lags + 1):
@@ -59,7 +56,6 @@ def predict_flow_per_scats_sequential(model_path, data_path, lags, hour):
 
             if current_datetime.hour == hour:
                 latest_sequence = current_sequence
-                latest_datetime = current_datetime
 
         if latest_sequence is None:
             print(f"Could not find a complete sequence of length {lags} ending at hour {hour} for SCATS {scats_number}.")
@@ -85,6 +81,7 @@ def predict_flow_per_scats_sequential(model_path, data_path, lags, hour):
     # print(predicted_flows)
     return predicted_flows
 
+# Returns a Graph object based on inputs
 def create_graph(predicted_flows, nodes_file, edges_file):
     nodes = pd.read_csv(nodes_file)
     edges = pd.read_csv(edges_file)

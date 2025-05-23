@@ -1,6 +1,9 @@
 import pandas as pd
-import io # To handle the string data as a file
+import io 
 
+# THIS FILE IS TO CREATE A ROUGH edges.csv IT DOESN'T CREATE A FINALIZED FILE. AFTER THE CSV IS CREATED, FURTHER MODIFICATION IS REQUIRED, THIS JUST HELPS REDUCE THE WORKLOAD AND START WITH A SENSICAL STARTING POINT THIS FILE CURRENTLY DOESN'T DO ANYTHING, BUT IF YOU WANT IT TO CREATE A NEW CSV FILE, UNCOMMENT THE END OF THIS FILE.
+
+# All unique locations collected by hand.
 csv_data = """SCATS,Location
 0970,HIGH_STREET_RD E of WARRIGAL_RD
 0970,HIGH_STREET_RD W of WARRIGAL_RD
@@ -166,10 +169,9 @@ df['Roads'] = df['Location'].apply(extract_roads)
 # Group by SCATS and get the set of all roads for each SCATS
 scats_roads = df.groupby('SCATS')['Roads'].sum().apply(set)
 
-# Create a list to store the edges
 edges_list = []
 
-# Iterate through all unique pairs of SCATS points
+# Iterate through all unique pairs of SCATS points and add pairs to edge_list
 scats_points = scats_roads.index.tolist()
 for i in range(len(scats_points)):
     for j in range(i + 1, len(scats_points)):
@@ -178,7 +180,6 @@ for i in range(len(scats_points)):
         # Find shared roads using set intersection
         shared_roads = scats_roads[scats1].intersection(scats_roads[scats2])
         if shared_roads:
-            # Add the edge (sorted to avoid duplicates)
             edge = tuple(sorted((scats1, scats2)))
             edges_list.append(edge)
 

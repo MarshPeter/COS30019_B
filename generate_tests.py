@@ -2,6 +2,8 @@ import random
 import io
 import pandas as pd
 
+# This file generates tests for us. We just copied them over to run_tests and put them in a list, but you could also write to a csv file and run it if you really wanted to
+
 data_set1 = ['LSTM', 'sRRN', 'GRU']
 data_set2 = ['BFS', 'DFS', 'Uniform Cost', 'Greedy', 'AStart']
 
