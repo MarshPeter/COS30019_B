@@ -53,7 +53,7 @@ def main():
     n = get_GRU([12, 64, 64, 1])
     train_model(n, X_train, Y_train, "GRU", config)
     o = get_sRNN([12, 64, 64, 1])
-    train_model(o, X_train, Y_train, "sRRN", config)
+    train_model(o, X_train, Y_train, "sRNN", config)
 
 if __name__ == "__main__":
     main()
