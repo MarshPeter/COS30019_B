@@ -2,7 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the CSV file
-loss_data = pd.read_csv('sRNN loss.csv') # Replace with the loss.csv you wish to investigate
+model = "GRU" # name the file you wish to display (ANY OF: SRNN, LSTM, GRU)
+loss_data = pd.read_csv(f'{model} loss.csv') 
 
 loss_data['Epoch'] = range(1, len(loss_data) + 1)
 
@@ -12,7 +13,7 @@ plt.plot(loss_data['Epoch'], loss_data['loss'], label='Training Loss')
 plt.plot(loss_data['Epoch'], loss_data['val_loss'], label='Validation Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
-plt.title('Training and Validation Loss over Epochs')
+plt.title(f'Training and Validation Loss over Epochs for {model}')
 plt.legend()
 plt.grid(True)
 plt.show()
